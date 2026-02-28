@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Smart Question Paper Generator</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <!-- compression helper used to reduce QR payload size -->
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Mobile Header -->
+        <header class="mobile-header">
+            <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleSidebar()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <h1>📝 Paper Generator</h1>
+        </header>
+
+        <!-- Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1>📝 Paper Generator</h1>
+                <p>Smart Question Paper</p>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <span class="nav-section-title">Configuration</span>
+                    <button class="nav-btn active" data-tab="settings" onclick="switchTab('settings')">
+                        <span class="icon">⚙️</span> 
+                        <span class="nav-text">Settings</span>
+                    </button>
+                </div>
+                
+                <div class="nav-section">
+                    <span class="nav-section-title">Question Types</span>
+                    <button class="nav-btn" data-tab="mcq" onclick="switchTab('mcq')">
+                        <span class="icon">🔘</span> 
+                        <span class="nav-text">MCQs</span>
+                    </button>
+                    <button class="nav-btn" data-tab="fillblanks" onclick="switchTab('fillblanks')">
+                        <span class="icon">✏️</span> 
+                        <span class="nav-text">Fill in Blanks</span>
+                    </button>
+                    <button class="nav-btn" data-tab="truefalse" onclick="switchTab('truefalse')">
+                        <span class="icon">✓✗</span> 
+                        <span class="nav-text">True/False</span>
+                    </button>
+                    <button class="nav-btn" data-tab="short" onclick="switchTab('short')">
+                        <span class="icon">📝</span> 
+                        <span class="nav-text">Short Questions</span>
+                    </button>
+                    <button class="nav-btn" data-tab="long" onclick="switchTab('long')">
+                        <span class="icon">📄</span> 
+                        <span class="nav-text">Long Questions</span>
+                    </button>
+                </div>
+                
+                <div class="nav-section">
+                    <span class="nav-section-title">Output</span>
+                    <button class="nav-btn" data-tab="preview" onclick="switchTab('preview')">
+                        <span class="icon">👁️</span> 
+                        <span class="nav-text">Preview & Print</span>
+                    </button>
+                </div>
+
+                <div class="nav-section">
+                    <span class="nav-section-title">Syllabus</span>
+                    <button class="nav-btn" data-tab="syllabus" onclick="switchTab('syllabus')">
+                        <span class="icon">📘</span> 
+                        <span class="nav-text">Syllabus Manager</span>
+                    </button>
+                </div>
+
+                <div class="nav-section">
+                    <span class="nav-section-title">Assignment</span>
+                    <button class="nav-btn" data-tab="assignment" onclick="switchTab('assignment')">
+                        <span class="icon">📋</span> 
+                        <span class="nav-text">Weekly Assignment</span>
+                    </button>
+                </div>
+            </nav>
+            
+            <div class="sidebar-stats">
+                <h3>📊 Statistics</h3>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <span class="stat-value" id="totalQuestions">0</span>
+                        <span class="stat-label">Questions</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" id="totalMarks">0</span>
+                        <span class="stat-label">Marks</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Settings Panel -->
+            <section class="panel active" id="settings-panel">
+                <div class="panel-header">
+                    <h2>⚙️ Paper Settings</h2>
+                    <p>Configure your question paper details</p>
+                </div>
+                
+                <div class="panel-content">
+                    <div class="settings-grid">
+                        <div class="form-group full-width">
+                            <label>School Name *</label>
+                            <input type="text" id="schoolName" placeholder="Enter school name">
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label>School Address</label>
+                            <input type="text" id="schoolAddress" placeholder="Enter school address">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <input type="text" id="schoolPhone" placeholder="e.g., 0300-1234567">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="text" id="schoolEmail" placeholder="e.g., info@school.edu">
+                        </div>
+                        
+                        <div class="form-group full-width">
+                            <label>School Logo</label>
+                            <div class="logo-upload">
+                                <input type="file" id="schoolLogo" accept="image/*" onchange="previewLogo(event)">
+                                <div class="logo-preview" id="logoPreview" onclick="document.getElementById('schoolLogo').click()">
+                                    <span>📷 Click to upload logo</span>
+                                </div>
+                                <button class="btn btn-sm btn-danger" onclick="removeLogo()" id="removeLogoBtn" style="display:none;">Remove Logo</button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Class *</label>
+                            <input type="text" id="className" placeholder="e.g., 10th, IX, Grade 5">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Subject *</label>
+                            <input type="text" id="subjectName" placeholder="e.g., Mathematics">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Examination Type</label>
+                            <select id="examType">
+                                <option value="Monthly Test">Monthly Test</option>
+                                <option value="Mid Term">Mid Term</option>
+                                <option value="Final Term">Final Term</option>
+                                <option value="Unit Test">Unit Test</option>
+                                <option value="Practice Test">Practice Test</option>
+                                <option value="Annual Exam">Annual Exam</option>
+                                 <option value="Pre Board">Pre Board</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Time Duration</label>
+                            <input type="text" id="timeDuration" placeholder="e.g., 3 Hours">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Total Marks</label>
+                            <input type="number" id="paperMarks" placeholder="e.g., 100">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Date</label>
+                            <input type="date" id="examDate">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Teacher Name</label>
+                            <input type="text" id="teacherName" placeholder="Enter teacher name">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Paper Language</label>
+                            <div class="language-toggle">
+                                <button class="lang-btn active" data-lang="en" onclick="setLanguage('en')">English</button>
+                                <button class="lang-btn" data-lang="ur" onclick="setLanguage('ur')">اردو</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label>Additional Instructions (Optional)</label>
+                            <textarea id="paperInstructions" rows="2" placeholder="e.g., Attempt all questions. Each question carries equal marks."></textarea>
+                        </div>
+                    </div>
+                    <div class="custom-subsection">
+                            <h4>📱 QR Code Settings</h4>
+                            <div class="settings-grid">
+                                <div class="form-group">
+                                    <label>Enable QR Code</label>
+                                    <select id="enableQrCode">
+                                        <option value="no" selected>No - Hide QR Code</option>
+                                        <option value="yes">Yes - Show QR Code</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>QR Code Position</label>
+                                    <select id="qrPosition">
+                                        <option value="opposite" selected>Opposite to Logo</option>
+                                        <option value="left">Left Side</option>
+                                        <option value="right">Right Side</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>QR Code Size</label>
+                                    <select id="qrSize">
+                                        <option value="60">Small (2.5cm)</option>
+                                        <option value="80" selected>Medium (3cm)</option>
+                                        <option value="100">Large (3.5cm)</option>
+                                        <option value="120">Extra Large (4cm)</option>
+                                    </select>
+                                </div>
+                                <div class="checkbox-grid full-width" style="grid-column: 1 / -1;">
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" id="qrIncludeInfo" checked>
+                                        <span class="checkmark"></span>
+                                        <span>Include Paper Info</span>
+                                    </label>
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" id="qrIncludeQuestions" checked>
+                                        <span class="checkmark"></span>
+                                        <span>Include Questions</span>
+                                    </label>
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" id="qrIncludeAnswers">
+                                        <span class="checkmark"></span>
+                                        <span>Include Answers</span>
+                                    </label>
+                                </div>
+                                <div class="form-group full-width" style="grid-column: 1 / -1; margin-top: 10px;">
+                                    <button class="btn btn-secondary" onclick="previewQRCode()">👁️ Preview QR Code Data</button>
+                                    <div id="qrPreviewContainer" class="qr-preview-container" style="display:none; margin-top: 15px;">
+                                        <div id="qrImagePreview"></div>
+                                        <textarea id="qrDataPreview" rows="5" readonly style="width: 100%; margin-top: 10px; font-family: monospace; font-size: 12px; border: 1px solid #ccc; padding: 5px;"></textarea>
+                                        <div id="qrSizeWarning" style="color: #ef4444; font-size: 12px; margin-top: 5px; display: none;">Warning: Data size might be too large for reliable scanning. Try unchecking "Include Questions".</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    <div class="settings-actions">
+                        <button class="btn btn-primary" onclick="saveSchoolData()">
+                            💾 Save School Data
+                        </button>
+                        <button class="btn btn-secondary" onclick="loadSchoolData()">
+                            📂 Load Data
+                        </button>
+                        <button class="btn btn-danger" onclick="clearSchoolData()">
+                            🗑️ Clear Data
+                        </button>
+                    </div>
+                    
+                    <div class="saved-data-indicator" id="savedDataIndicator" style="display: none;">
+                        ✅ School data is saved. It will auto-load next time.
+                    </div>
+
+                    <!-- Paper Customization Section -->
+                    <div class="customization-section">
+                        <h3>🎨 Paper Layout Customization</h3>
+                        
+                        <div class="custom-subsection">
+                            <h4>📷 Logo Settings</h4>
+                            <div class="settings-grid">
+                                <div class="form-group">
+                                    <label>Logo Position</label>
+                                    <select id="logoPosition">
+                                        <option value="right" selected>Right Side</option>
+                                        <option value="center">Center (Top)</option>
+                                        <option value="left">Left Side</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Logo Size</label>
+                                    <select id="logoSize">
+                                        <option value="40">Very Small (40px)</option>
+                                        <option value="50">Small (50px)</option>
+                                        <option value="60">Medium (60px)</option>
+                                        <option value="70" selected>Large (70px)</option>
+                                        <option value="80">Extra Large (80px)</option>
+                                        <option value="90">Huge (90px)</option>
+                                        <option value="100">Very Huge (100px)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Logo Vertical Position</label>
+                                    <select id="logoVerticalPosition">
+                                        <option value="0">Very Close to Title</option>
+                                        <option value="2">Close to Title</option>
+                                        <option value="5" selected>Normal</option>
+                                        <option value="8">Lower</option>
+                                        <option value="12">Much Lower</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Logo Margin (Right/Left)</label>
+                                    <select id="logoMargin">
+                                        <option value="0">No Margin</option>
+                                        <option value="5">Small (5px)</option>
+                                        <option value="10" selected>Normal (10px)</option>
+                                        <option value="15">Large (15px)</option>
+                                        <option value="20">Extra Large (20px)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="custom-subsection">
+                            <h4>📝 Show/Hide Header Fields</h4>
+                            <div class="checkbox-grid">
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showSchoolName" checked>
+                                    <span class="checkmark"></span>
+                                    <span>School Name</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showAddress" checked>
+                                    <span class="checkmark"></span>
+                                    <span>Address</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showPhone" checked>
+                                    <span class="checkmark"></span>
+                                    <span>Phone</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showEmail">
+                                    <span class="checkmark"></span>
+                                    <span>Email</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showExamTitle" checked>
+                                    <span class="checkmark"></span>
+                                    <span>Exam Title Box</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showClass" checked>
+                                    <span class="checkmark"></span>
+                                    <span>Class</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showSubject" checked>
+                                    <span class="checkmark"></span>
+                                    <span>Subject</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showTime" checked>
+                                    <span class="checkmark"></span>
+                                    <span>Time Duration</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showMarks" checked>
+                                    <span class="checkmark"></span>
+                                    <span>Total Marks</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showDate" checked>
+                                    <span class="checkmark"></span>
+                                    <span>Date</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showTeacher" checked>
+                                    <span class="checkmark"></span>
+                                    <span>Teacher Name</span>
+                                </label>
+                                <label class="checkbox-item">
+                                    <input type="checkbox" id="showInstructions" checked>
+                                    <span class="checkmark"></span>
+                                    <span>Instructions</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="custom-subsection">
+                            <h4>📞 Contact Info Settings</h4>
+                            <div class="settings-grid">
+                                <div class="form-group">
+                                    <label>Contact Info Size</label>
+                                    <select id="contactInfoSize">
+                                        <option value="7">Very Small (7pt)</option>
+                                        <option value="8">Small (8pt)</option>
+                                        <option value="9" selected>Normal (9pt)</option>
+                                        <option value="10">Medium (10pt)</option>
+                                        <option value="11">Large (11pt)</option>
+                                        <option value="12">Extra Large (12pt)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Contact Info Style</label>
+                                    <select id="contactInfoStyle">
+                                        <option value="inline" selected>Inline (One Line)</option>
+                                        <option value="separate">Separate Lines</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="custom-subsection">
+                            <h4>📐 Font Size Controls</h4>
+                            <div class="settings-grid">
+                                <div class="form-group">
+                                    <label>School Name Size</label>
+                                    <select id="schoolNameSize">
+                                        <option value="14">Small (14pt)</option>
+                                        <option value="16">Medium (16pt)</option>
+                                        <option value="18" selected>Large (18pt)</option>
+                                        <option value="20">Very Large (20pt)</option>
+                                        <option value="22">Extra Large (22pt)</option>
+                                        <option value="24">Huge (24pt)</option>
+                                        <option value="26">Very Huge (26pt)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Address Size</label>
+                                    <select id="addressSize">
+                                        <option value="8">Small (8pt)</option>
+                                        <option value="9">Normal (9pt)</option>
+                                        <option value="10" selected>Medium (10pt)</option>
+                                        <option value="11">Large (11pt)</option>
+                                        <option value="12">Extra Large (12pt)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Header Text Size</label>
+                                    <select id="headerTextSize">
+                                        <option value="8">Small (8pt)</option>
+                                        <option value="9">Medium (9pt)</option>
+                                        <option value="10" selected>Large (10pt)</option>
+                                        <option value="11">Extra Large (11pt)</option>
+                                        <option value="12">Huge (12pt)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Question Text Size</label>
+                                    <select id="questionTextSize">
+                                        <option value="9">Small (9pt)</option>
+                                        <option value="10">Medium (10pt)</option>
+                                        <option value="11" selected>Large (11pt)</option>
+                                        <option value="12">Extra Large (12pt)</option>
+                                        <option value="13">Huge (13pt)</option>
+                                        <option value="14">Very Huge (14pt)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Section Title Size</label>
+                                    <select id="sectionTitleSize">
+                                        <option value="10">Small (10pt)</option>
+                                        <option value="11">Medium (11pt)</option>
+                                        <option value="12" selected>Large (12pt)</option>
+                                        <option value="13">Extra Large (13pt)</option>
+                                        <option value="14">Huge (14pt)</option>
+                                        <option value="16">Very Huge (16pt)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Marks Size</label>
+                                    <select id="marksSize">
+                                        <option value="7">Small (7pt)</option>
+                                        <option value="8">Medium (8pt)</option>
+                                        <option value="9" selected>Large (9pt)</option>
+                                        <option value="10">Extra Large (10pt)</option>
+                                        <option value="11">Huge (11pt)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Line Height</label>
+                                    <select id="lineHeight">
+                                        <option value="1.2">Tight (1.2)</option>
+                                        <option value="1.4" selected>Normal (1.4)</option>
+                                        <option value="1.6">Relaxed (1.6)</option>
+                                        <option value="1.8">Wide (1.8)</option>
+                                        <option value="2.0">Extra Wide (2.0)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                      <div class="custom-subsection">
+    <h4>📏 Spacing Controls</h4>
+    <div class="settings-grid">
+        <div class="form-group">
+            <label>MCQ Options Spacing</label>
+            <select id="mcqOptionSpacing" onchange="generatePreview()">
+                <option value="tight">Tight (2mm)</option>
+                <option value="compact">Compact (4mm)</option>
+                <option value="normal" selected>Normal (6mm)</option>
+                <option value="relaxed">Relaxed (8mm)</option>
+                <option value="wide">Wide (10mm)</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label>Question Spacing</label>
+            <select id="questionSpacing" onchange="generatePreview()">
+                <option value="none">No Spacing</option>
+                <option value="tight">Tight (2mm)</option>
+                <option value="compact" selected>Compact (4mm)</option>
+                <option value="normal">Normal (6mm)</option>
+                <option value="relaxed">Relaxed (8mm)</option>
+                <option value="wide">Wide (10mm)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Section Spacing</label>
+            <select id="sectionSpacing">
+                <option value="none">No Spacing</option>
+                <option value="tight">Tight (3mm)</option>
+                <option value="compact" selected>Compact (6mm)</option>
+                <option value="normal">Normal (10mm)</option>
+                <option value="relaxed">Relaxed (14mm)</option>
+                <option value="wide">Wide (18mm)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Header Spacing</label>
+            <select id="headerSpacing">
+                <option value="none">No Spacing</option>
+                <option value="tight">Tight (2mm)</option>
+                <option value="compact" selected>Compact (4mm)</option>
+                <option value="normal">Normal (6mm)</option>
+                <option value="relaxed">Relaxed (8mm)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Heading to Content Spacing</label>
+            <select id="headingContentSpacing">
+                <option value="none">No Spacing</option>
+                <option value="tight">Tight (2mm)</option>
+                <option value="compact" selected>Compact (4mm)</option>
+                <option value="normal">Normal (6mm)</option>
+                <option value="relaxed">Relaxed (10mm)</option>
+            </select>
+        </div>
+    </div>
+</div> <div class="custom-subsection">
+    <h4>🎨 Layout & Style</h4>
+    <div class="settings-grid">
+        <div class="form-group">
+            <label>Section Header Style</label>
+            <select id="sectionHeaderStyle">
+                <option value="bordered" selected>Bordered (B&W Friendly)</option>
+                <option value="underline">Underlined</option>
+                <option value="simple">Simple Bold</option>
+                <option value="boxed">Boxed</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Info Grid Columns</label>
+            <select id="infoGridColumns">
+                <option value="1">1 Column</option>
+                <option value="2">2 Columns</option>
+                <option value="3" selected>3 Columns</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Header Style</label>
+            <select id="headerStyle">
+                <option value="modern" selected>Modern (Bordered)</option>
+                <option value="classic">Classic (Simple)</option>
+                <option value="minimal">Minimal</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Page Margins</label>
+            <select id="pageMargins">
+                <option value="narrow">Narrow (5mm)</option>
+                <option value="normal" selected>Normal (8mm)</option>
+                <option value="wide">Wide (12mm)</option>
+            </select>
+        </div>
+    </div>
+</div>
+                        
+                        <!-- Syllabus Specific Settings -->
+                        <div class="custom-subsection">
+                            <h4>📘 Syllabus Text Size Settings</h4>
+                            <div class="settings-grid">
+                                <div class="form-group">
+                                    <label>Syllabus Table Text Size</label>
+                                    <select id="syllabusTextSize">
+                                        <option value="8">Very Small (8pt)</option>
+                                        <option value="9">Small (9pt)</option>
+                                        <option value="10" selected>Normal (10pt)</option>
+                                        <option value="11">Medium (11pt)</option>
+                                        <option value="12">Large (12pt)</option>
+                                        <option value="13">Extra Large (13pt)</option>
+                                        <option value="14">Huge (14pt)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Week Title Size</label>
+                                    <select id="syllabusWeekTitleSize">
+                                        <option value="10">Small (10pt)</option>
+                                        <option value="11">Medium (11pt)</option>
+                                        <option value="12" selected>Normal (12pt)</option>
+                                        <option value="14">Large (14pt)</option>
+                                        <option value="16">Extra Large (16pt)</option>
+                                        <option value="18">Huge (18pt)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Table Header Size</label>
+                                    <select id="syllabusTableHeaderSize">
+                                        <option value="8">Very Small (8pt)</option>
+                                        <option value="9">Small (9pt)</option>
+                                        <option value="10" selected>Normal (10pt)</option>
+                                        <option value="11">Medium (11pt)</option>
+                                        <option value="12">Large (12pt)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Syllabus Info Text Size</label>
+                                    <select id="syllabusInfoSize">
+                                        <option value="9">Small (9pt)</option>
+                                        <option value="10" selected>Normal (10pt)</option>
+                                        <option value="11">Medium (11pt)</option>
+                                        <option value="12">Large (12pt)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Syllabus Table Column Width Settings -->
+                        <div class="custom-subsection">
+                            <h4>📊 Syllabus Table Column Widths</h4>
+                            <div class="settings-grid">
+                                <div class="form-group">
+                                    <label>Subject Column (%)</label>
+                                    <input type="number" id="syllabusColSubject" value="12" min="5" max="30">
+                                </div>
+                                <div class="form-group">
+                                    <label>Units/Topics Column (%)</label>
+                                    <input type="number" id="syllabusColTopics" value="20" min="5" max="40">
+                                </div>
+                                <div class="form-group">
+                                    <label>Activity Column (%)</label>
+                                    <input type="number" id="syllabusColActivity" value="25" min="5" max="40">
+                                </div>
+                                <div class="form-group">
+                                    <label>SLOs Column (%)</label>
+                                    <input type="number" id="syllabusColSLOs" value="23" min="5" max="40">
+                                </div>
+                                <div class="form-group">
+                                    <label>Assessment Column (%)</label>
+                                    <input type="number" id="syllabusColAssessment" value="20" min="5" max="40">
+                                </div>
+                            </div>
+                            <small class="hint">💡 Total should equal 100%. Adjust column widths as needed.</small>
+                        </div>
+
+                        <!-- Assignment Text Size Settings -->
+                        <div class="custom-subsection">
+                            <h4>📋 Assignment Text Size Settings</h4>
+                            <div class="settings-grid">
+                                <div class="form-group">
+                                    <label>Assignment Base Text Size</label>
+                                    <select id="assignmentTextSize">
+                                        <option value="8">Very Small (8pt)</option>
+                                        <option value="9">Small (9pt)</option>
+                                        <option value="10" selected>Normal (10pt)</option>
+                                        <option value="11">Medium (11pt)</option>
+                                        <option value="12">Large (12pt)</option>
+                                        <option value="13">Extra Large (13pt)</option>
+                                        <option value="14">Huge (14pt)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Subject Heading Size</label>
+                                    <select id="assignmentSubjectSize">
+                                        <option value="10">Small (10pt)</option>
+                                        <option value="11">Medium (11pt)</option>
+                                        <option value="12" selected>Normal (12pt)</option>
+                                        <option value="13">Large (13pt)</option>
+                                        <option value="14">Extra Large (14pt)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Question Text Size</label>
+                                    <select id="assignmentQuestionSize">
+                                        <option value="9">Small (9pt)</option>
+                                        <option value="10" selected>Normal (10pt)</option>
+                                        <option value="11">Medium (11pt)</option>
+                                        <option value="12">Large (12pt)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Answer Line Height</label>
+                                    <select id="assignmentLineHeight">
+                                        <option value="18">Compact (18px)</option>
+                                        <option value="22" selected>Normal (22px)</option>
+                                        <option value="26">Relaxed (26px)</option>
+                                        <option value="30">Wide (30px)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-actions">
+                            <button class="btn btn-primary" onclick="saveCustomization()">
+                                💾 Save Layout Settings
+                            </button>
+                            <button class="btn btn-secondary" onclick="resetCustomization()">
+                                🔄 Reset to Default
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MCQ Panel -->
+            <section class="panel" id="mcq-panel">
+                <div class="panel-header">
+                    <h2>🔘 Multiple Choice Questions</h2>
+                    <p>Add MCQs with 4 options each</p>
+                </div>
+                
+                <div class="panel-content">
+                    <div class="question-form">
+                        <div class="form-group">
+                            <label>Question Text *</label>
+                            <textarea id="mcqQuestion" rows="2" placeholder="Enter your MCQ question here..."></textarea>
+                        </div>
+                        
+                        <div class="options-grid">
+                            <div class="form-group">
+                                <label>Option A *</label>
+                                <input type="text" id="mcqOptionA" placeholder="First option">
+                            </div>
+                            <div class="form-group">
+                                <label>Option B *</label>
+                                <input type="text" id="mcqOptionB" placeholder="Second option">
+                            </div>
+                            <div class="form-group">
+                                <label>Option C *</label>
+                                <input type="text" id="mcqOptionC" placeholder="Third option">
+                            </div>
+                            <div class="form-group">
+                                <label>Option D *</label>
+                                <input type="text" id="mcqOptionD" placeholder="Fourth option">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Marks</label>
+                                <input type="number" id="mcqMarks" value="1" min="1">
+                            </div>
+                            <button class="btn btn-primary" onclick="addMCQ()">
+                                ➕ Add MCQ
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="questions-list" id="mcqList">
+                        <div class="empty-state">
+                            <span class="empty-icon">📋</span>
+                            <p>No MCQs added yet</p>
+                            <small>Add your first MCQ using the form above</small>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Fill in the Blanks Panel -->
+            <section class="panel" id="fillblanks-panel">
+                <div class="panel-header">
+                    <h2>✏️ Fill in the Blanks</h2>
+                    <p>Add fill in the blank questions</p>
+                </div>
+                
+                <div class="panel-content">
+                    <div class="question-form">
+                        <div class="form-group">
+                            <label>Question Text *</label>
+                            <textarea id="fillBlankQuestion" rows="2" placeholder="Use ______ for blanks. Example: The capital of Pakistan is ______."></textarea>
+                            <small class="hint">💡 Tip: Use underscores (______) to indicate blank spaces</small>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Marks</label>
+                                <input type="number" id="fillBlankMarks" value="1" min="1">
+                            </div>
+                            <button class="btn btn-primary" onclick="addFillBlank()">
+                                ➕ Add Question
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="questions-list" id="fillBlankList">
+                        <div class="empty-state">
+                            <span class="empty-icon">✏️</span>
+                            <p>No fill in the blank questions added yet</p>
+                            <small>Add your first question using the form above</small>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- True/False Panel -->
+            <section class="panel" id="truefalse-panel">
+                <div class="panel-header">
+                    <h2>✓✗ True/False Questions</h2>
+                    <p>Add true or false statements</p>
+                </div>
+                
+                <div class="panel-content">
+                    <div class="question-form">
+                        <div class="form-group">
+                            <label>Statement *</label>
+                            <textarea id="trueFalseQuestion" rows="2" placeholder="Enter a statement that can be marked as True or False..."></textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Marks</label>
+                                <input type="number" id="trueFalseMarks" value="1" min="1">
+                            </div>
+                            <button class="btn btn-primary" onclick="addTrueFalse()">
+                                ➕ Add Statement
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="questions-list" id="trueFalseList">
+                        <div class="empty-state">
+                            <span class="empty-icon">✓✗</span>
+                            <p>No true/false questions added yet</p>
+                            <small>Add your first statement using the form above</small>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Short Questions Panel -->
+            <section class="panel" id="short-panel">
+                <div class="panel-header">
+                    <h2>📝 Short Questions</h2>
+                    <p>Add short answer questions</p>
+                </div>
+                
+                <div class="panel-content">
+                    <div class="question-form">
+                        <div class="form-group">
+                            <label>Question Text *</label>
+                            <textarea id="shortQuestion" rows="2" placeholder="Enter your short question here..."></textarea>
+                        </div>
+                        
+                        <div class="form-row-multi">
+                            <div class="form-group">
+                                <label>Marks</label>
+                                <input type="number" id="shortMarks" value="2" min="1">
+                            </div>
+                            <div class="form-group">
+                                <label>Attempt (Optional)</label>
+                                <input type="number" id="shortAttempt" min="1" placeholder="e.g., 3">
+                            </div>
+                            <button class="btn btn-primary" onclick="addShortQuestion()">
+                                ➕ Add
+                            </button>
+                        </div>
+                        <small class="hint">💡 Attempt: How many questions students should answer (leave empty for all)</small>
+                    </div>
+                    
+                    <div class="questions-list" id="shortList">
+                        <div class="empty-state">
+                            <span class="empty-icon">📝</span>
+                            <p>No short questions added yet</p>
+                            <small>Add your first question using the form above</small>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Long Questions Panel -->
+            <section class="panel" id="long-panel">
+                <div class="panel-header">
+                    <h2>📄 Long Questions</h2>
+                    <p>Add detailed/essay type questions</p>
+                </div>
+                
+                <div class="panel-content">
+                   <div class="question-form">
+                        <div class="form-group">
+                            <label>Main Question Text (Optional)</label>
+                            <textarea id="longQuestion" rows="1" placeholder="e.g., Answer the following questions in detail..."></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Question Parts (a, b, c...)</label>
+                            <div id="longPartsContainer">
+                                <div class="long-part-row" style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+                                    <span style="font-weight: bold; min-width: 20px;">a)</span>
+                                    <input type="text" class="long-part-text" placeholder="Part description..." style="flex: 1;">
+                                    <input type="number" class="long-part-marks" placeholder="Marks" value="5" min="1" style="width: 80px;">
+                                </div>
+                            </div>
+                            <button class="btn btn-sm btn-secondary" onclick="addLongPart()">➕ Add Part</button>
+                        </div>
+                        
+                        <div class="form-row-multi" style="margin-top: 15px;">
+                            <div class="form-group">
+                                <label>Attempt (Optional)</label>
+                                <input type="number" id="longAttempt" min="1" placeholder="e.g., 2">
+                            </div>
+                            <button class="btn btn-primary" onclick="addLongQuestion()">
+                                ➕ Add Question
+                            </button>
+                        </div>
+                        <small class="hint">💡 Total marks will be automatically calculated from all parts.</small>
+                    </div>
+                    
+                    <div class="questions-list" id="longList">
+                        <div class="empty-state">
+                            <span class="empty-icon">📄</span>
+                            <p>No long questions added yet</p>
+                            <small>Add your first question using the form above</small>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Preview Panel -->
+            <section class="panel" id="preview-panel">
+                <div class="panel-header">
+                    <h2>👁️ Preview & Print</h2>
+                    <p>Review your paper and download/print</p>
+                </div>
+                
+                <div class="panel-content">
+                    <div class="preview-actions">
+                        <button class="btn btn-primary" onclick="generatePreview()">
+                            🔄 Generate
+                        </button>
+                        <button class="btn btn-success" onclick="downloadPDF()">
+                            📥 PDF
+                        </button>
+                        <button class="btn btn-secondary" onclick="printPaper()">
+                            🖨️ Print
+                        </button>
+                        <button class="btn btn-danger" onclick="resetAllQuestions()">
+                            🗑️ Reset
+                        </button>
+                    </div>
+                    
+                    <div class="preview-container" id="previewContainer">
+                        <div class="preview-placeholder">
+                            <span class="preview-icon">📄</span>
+                            <p>Click "Generate" to see your paper</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Syllabus Management Panel -->
+            <section class="panel" id="syllabus-panel">
+                <div class="panel-header">
+                    <h2>📘 Syllabus Management</h2>
+                    <p>Create and manage week-wise syllabus for your class</p>
+                    <div class="syllabus-lang-toggle">
+                        <button class="lang-btn active" data-lang="en" onclick="setSyllabusLanguage('en')">English</button>
+                        <button class="lang-btn" data-lang="ur" onclick="setSyllabusLanguage('ur')">اردو</button>
+                    </div>
+                </div>
+                
+                <div class="panel-content" id="syllabusContent">
+                    <!-- Top Filters -->
+                    <div class="syllabus-filters">
+                        <div class="filter-row">
+                            <div class="form-group">
+                                <label class="syllabus-label" data-en="Term" data-ur="ٹرم">Term</label>
+                                <select id="syllabusTerm">
+                                    <option value="1st Term">1st Term</option>
+                                    <option value="2nd Term">2nd Term</option>
+                                    <option value="3rd Term">3rd Term</option>
+                                    <option value="Final Term">Final Term</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="syllabus-label" data-en="Class" data-ur="جماعت">Class</label>
+                                <select id="syllabusClass">
+                                    <option value="Play Group">Play Group</option>
+                                    <option value="Playgroup">Playgroup</option>
+                                    <option value="Nursery">Nursery</option>
+                                    <option value="Prep">Prep</option>
+                                    <option value="KG">KG</option>
+                                    <option value="1st">1st</option>
+                                    <option value="2nd">2nd</option>
+                                    <option value="3rd">3rd</option>
+                                    <option value="4th">4th</option>
+                                    <option value="5th">5th</option>
+                                    <option value="6th">6th</option>
+                                    <option value="7th">7th</option>
+                                    <option value="8th">8th</option>
+                                    <option value="9th">9th</option>
+                                    <option value="10th">10th</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="syllabus-label" data-en="Academic Year" data-ur="تعلیمی سال">Academic Year</label>
+                                <input type="text" id="syllabusYear" placeholder="e.g., 2025-2026">
+                            </div>
+                        </div>
+                        
+                        <div class="filter-row">
+                            <div class="form-group search-group">
+                                <label class="syllabus-label" data-en="🔍 Search by Subject" data-ur="🔍 مضمون سے تلاش کریں">🔍 Search by Subject</label>
+                                <input type="text" id="syllabusSearch" placeholder="Type subject name to search..." oninput="searchSyllabus()">
+                            </div>
+                            <div class="form-group">
+                                <button class="btn btn-primary" onclick="loadSyllabus()">
+                                    📂 <span class="syllabus-label" data-en="Load Syllabus" data-ur="نصاب لوڈ کریں">Load Syllabus</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Syllabus Actions -->
+                    <div class="syllabus-actions">
+                        <button class="btn btn-primary" onclick="addNewWeek()">
+                            ➕ Add Week
+                        </button>
+                        <button class="btn btn-success" onclick="saveSyllabus()">
+                            💾 Save Syllabus
+                        </button>
+                        <button class="btn btn-secondary" onclick="printSyllabus()">
+                            🖨️ Print
+                        </button>
+                        <button class="btn btn-secondary" onclick="exportSyllabusPDF()">
+                            📥 PDF
+                        </button>
+                        <button class="btn btn-secondary" onclick="exportSyllabusJSON()">
+                            📤 Export JSON
+                        </button>
+                        <button class="btn btn-secondary" onclick="document.getElementById('importJSON').click()">
+                            📥 Import JSON
+                        </button>
+                        <input type="file" id="importJSON" accept=".json" style="display:none" onchange="importSyllabusJSON(event)">
+                        <button class="btn btn-danger" onclick="clearSyllabus()">
+                            🗑️ Clear All
+                        </button>
+                    </div>
+
+                    <!-- Weeks Container -->
+                    <div class="weeks-container" id="weeksContainer">
+                        <div class="empty-state">
+                            <span class="empty-icon">📘</span>
+                            <p>No weeks added yet</p>
+                            <small>Click "Add Week" to create your syllabus</small>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Weekly Assignment Panel -->
+            <section class="panel" id="assignment-panel">
+                <div class="panel-header">
+                    <h2>📋 Weekly Assignment</h2>
+                    <p>Create formal school-style weekly assignments</p>
+                    <div class="assignment-lang-toggle">
+                        <button class="lang-btn active" data-lang="en" onclick="setAssignmentLanguage('en')">English</button>
+                        <button class="lang-btn" data-lang="ur" onclick="setAssignmentLanguage('ur')">اردو</button>
+                    </div>
+                </div>
+                
+                <div class="panel-content" id="assignmentContent">
+                    <!-- Compact Assignment Header Settings -->
+                    <div class="assignment-section compact-section">
+                        <h3 class="section-title">🏫 School & Assignment Details</h3>
+                        <div class="settings-grid compact-grid">
+                            <div class="form-group">
+                                <label class="assign-label" data-en="Campus Name" data-ur="کیمپس کا نام">Campus Name</label>
+                                <input type="text" id="assignmentCampus" placeholder="Main Campus">
+                            </div>
+                            <div class="form-group">
+                                <label class="assign-label" data-en="Assignment No." data-ur="اسائنمنٹ نمبر">Assignment No.</label>
+                                <input type="number" id="assignmentNo" min="1" value="1">
+                            </div>
+                            <div class="form-group">
+                                <label class="assign-label" data-en="Session" data-ur="تعلیمی سال">Session</label>
+                                <input type="text" id="assignmentSession" placeholder="2024-25">
+                            </div>
+                            <div class="form-group">
+                                <label class="assign-label" data-en="Term" data-ur="ٹرم">Term</label>
+                                <select id="assignmentTerm">
+                                    <option value="1st">1st</option>
+                                    <option value="2nd">2nd</option>
+                                    <option value="3rd">3rd</option>
+                                    <option value="Final">Final</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="assign-label" data-en="Grade" data-ur="جماعت">Grade</label>
+                                <select id="assignmentClass">
+                                    <option value="">Select</option>
+                                    <option value="Play Group">Play Group</option>
+                                    <option value="Nursery">Nursery</option>
+                                    <option value="Prep">Prep</option>
+                                    <option value="KG">KG</option>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="assign-label" data-en="Section" data-ur="سیکشن">Section</label>
+                                <input type="text" id="assignmentSection" placeholder="A">
+                            </div>
+                        </div>
+                        
+                        <h4 style="margin-top: 15px; margin-bottom: 8px;">📝 Student Info (Compact Single Line)</h4>
+                        <div class="checkbox-grid compact-checkbox">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="showNameLine" checked>
+                                <span class="checkmark"></span>
+                                <span>Name</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="showDateLine" checked>
+                                <span class="checkmark"></span>
+                                <span>Date</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="showClassLine">
+                                <span class="checkmark"></span>
+                                <span>Class</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="showRollLine">
+                                <span class="checkmark"></span>
+                                <span>Roll No.</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Page Design Settings -->
+                    <div class="assignment-section compact-section">
+                        <h3 class="section-title">🎨 Page Design</h3>
+                        <div class="settings-grid compact-grid">
+                            <div class="form-group">
+                                <label>Border</label>
+                                <select id="assignmentBorderStyle">
+                                    <option value="double">Double Line</option>
+                                    <option value="simple" selected>Simple</option>
+                                    <option value="none">None</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Header</label>
+                                <select id="assignmentHeaderStyle">
+                                    <option value="compact" selected>Compact</option>
+                                    <option value="official">Official</option>
+                                    <option value="minimal">Minimal</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Answer Box Style</label>
+                                <select id="assignmentAnswerStyle">
+                                    <option value="lines" selected>Lines</option>
+                                    <option value="box">Box</option>
+                                    <option value="dotted">Dotted Lines</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Subject-wise Sections -->
+                    <div class="assignment-section compact-section">
+                        <h3 class="section-title">📚 Subjects</h3>
+                        <div class="subject-selector compact-subjects">
+                            <label class="subject-checkbox">
+                                <input type="checkbox" id="subjectEnglish" checked>
+                                <span class="subject-badge small-badge">English</span>
+                            </label>
+                            <label class="subject-checkbox">
+                                <input type="checkbox" id="subjectUrdu">
+                                <span class="subject-badge small-badge">Urdu</span>
+                            </label>
+                            <label class="subject-checkbox">
+                                <input type="checkbox" id="subjectMaths">
+                                <span class="subject-badge small-badge">Maths</span>
+                            </label>
+                            <label class="subject-checkbox">
+                                <input type="checkbox" id="subjectScience">
+                                <span class="subject-badge small-badge">Science</span>
+                            </label>
+                            <label class="subject-checkbox">
+                                <input type="checkbox" id="subjectIslamiat">
+                                <span class="subject-badge small-badge">Islamiat</span>
+                            </label>
+                            <label class="subject-checkbox">
+                                <input type="checkbox" id="subjectGK">
+                                <span class="subject-badge small-badge">G.K</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Subject Tabs -->
+                    <div class="assignment-tabs subject-tabs">
+                        <button class="assign-tab-btn active" data-subject="english" onclick="switchSubjectTab('english')">📖 English</button>
+                        <button class="assign-tab-btn" data-subject="urdu" onclick="switchSubjectTab('urdu')">📗 Urdu</button>
+                        <button class="assign-tab-btn" data-subject="maths" onclick="switchSubjectTab('maths')">🔢 Maths</button>
+                        <button class="assign-tab-btn" data-subject="science" onclick="switchSubjectTab('science')">🔬 Science</button>
+                        <button class="assign-tab-btn" data-subject="islamiat" onclick="switchSubjectTab('islamiat')">☪️ Islamiat</button>
+                        <button class="assign-tab-btn" data-subject="general" onclick="switchSubjectTab('general')">📋 General</button>
+                    </div>
+                    
+                    <!-- Question Type Tabs (Inside each subject) -->
+                    <div class="assignment-tabs question-type-tabs">
+                        <button class="qtype-tab-btn active" onclick="switchQuestionTypeTab('short')">📝 Short</button>
+                        <button class="qtype-tab-btn" onclick="switchQuestionTypeTab('long')">📄 Long</button>
+                        <button class="qtype-tab-btn" onclick="switchQuestionTypeTab('mcq')">🔘 MCQ</button>
+                        <button class="qtype-tab-btn" onclick="switchQuestionTypeTab('fillblanks')">✏️ Fill Blanks</button>
+                        <button class="qtype-tab-btn" onclick="switchQuestionTypeTab('truefalse')">✓✗ T/F</button>
+                        <button class="qtype-tab-btn" onclick="switchQuestionTypeTab('match')">🔗 Match</button>
+                        <button class="qtype-tab-btn" onclick="switchQuestionTypeTab('wordmeaning')">📖 Words</button>
+                        <button class="qtype-tab-btn" onclick="switchQuestionTypeTab('table')">📊 Table</button>
+                        <button class="qtype-tab-btn" onclick="switchQuestionTypeTab('picture')">🖼️ Picture</button>
+                        <button class="qtype-tab-btn" onclick="switchQuestionTypeTab('handwriting')">✍️ Writing</button>
+                    </div>
+                    
+                    <!-- Current Subject Display -->
+                    <div class="current-subject-display">
+                        <span class="subject-icon">📖</span>
+                        <span class="subject-name" id="currentSubjectName">English</span>
+                        <span class="subject-questions" id="currentSubjectCount">0 questions</span>
+                    </div>
+
+                    <!-- Short Questions Section -->
+                    <div class="assign-qtype-content active" id="qtype-short">
+                        <h4>📝 Short Questions</h4>
+                        <div class="question-form">
+                            <div class="form-group">
+                                <label>Question</label>
+                                <textarea id="assignShortQ" rows="2" placeholder="Enter short question..."></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Marks</label>
+                                    <input type="number" id="assignShortMarks" value="2" min="1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Answer Lines</label>
+                                    <input type="number" id="assignShortLines" value="3" min="1" max="20">
+                                </div>
+                                <button class="btn btn-primary" onclick="addSubjectQuestion('short')">➕ Add</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Long Questions Section -->
+                    <div class="assign-qtype-content" id="qtype-long">
+                        <h4>📄 Long / Descriptive Questions</h4>
+                        <div class="question-form">
+                            <div class="form-group">
+                                <label>Question</label>
+                                <textarea id="assignLongQ" rows="2" placeholder="Enter long question..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Sub-Questions (a, b, c...)</label>
+                                <div id="longSubQuestions">
+                                    <div class="sub-question-row">
+                                        <span>a)</span>
+                                        <input type="text" class="long-sub-q" placeholder="Sub-question a">
+                                    </div>
+                                </div>
+                                <button class="btn btn-sm btn-secondary" onclick="addLongSubQuestion()">➕ Add Sub-Q</button>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Marks</label>
+                                    <input type="number" id="assignLongMarks" value="5" min="1">
+                                </div>
+                                <div class="form-group">
+                                    <label>Answer Lines</label>
+                                    <input type="number" id="assignLongLines" value="10" min="1" max="30">
+                                </div>
+                                <button class="btn btn-primary" onclick="addSubjectQuestion('long')">➕ Add</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MCQ Section -->
+                    <div class="assign-qtype-content" id="qtype-mcq">
+                        <h4>🔘 Multiple Choice Questions</h4>
+                        <div class="question-form">
+                            <div class="form-group">
+                                <label>Question</label>
+                                <textarea id="assignMcqQ" rows="2" placeholder="Enter MCQ question..."></textarea>
+                            </div>
+                            <div class="options-grid">
+                                <div class="form-group"><label>A)</label><input type="text" id="assignMcqA" placeholder="Option A"></div>
+                                <div class="form-group"><label>B)</label><input type="text" id="assignMcqB" placeholder="Option B"></div>
+                                <div class="form-group"><label>C)</label><input type="text" id="assignMcqC" placeholder="Option C"></div>
+                                <div class="form-group"><label>D)</label><input type="text" id="assignMcqD" placeholder="Option D"></div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Marks</label>
+                                    <input type="number" id="assignMcqMarks" value="1" min="1">
+                                </div>
+                                <button class="btn btn-primary" onclick="addSubjectQuestion('mcq')">➕ Add</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fill in Blanks Section -->
+                    <div class="assign-qtype-content" id="qtype-fillblanks">
+                        <h4>✏️ Fill in the Blanks</h4>
+                        <div class="question-form">
+                            <div class="form-group">
+                                <label>Sentence (use ______ for blank)</label>
+                                <textarea id="assignFillQ" rows="2" placeholder="The capital of Pakistan is ______."></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Marks</label>
+                                    <input type="number" id="assignFillMarks" value="1" min="1">
+                                </div>
+                                <button class="btn btn-primary" onclick="addSubjectQuestion('fillblanks')">➕ Add</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- True/False Section -->
+                    <div class="assign-qtype-content" id="qtype-truefalse">
+                        <h4>✓✗ True / False</h4>
+                        <div class="question-form">
+                            <div class="form-group">
+                                <label>Statement</label>
+                                <textarea id="assignTfQ" rows="2" placeholder="Enter true/false statement..."></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Marks</label>
+                                    <input type="number" id="assignTfMarks" value="1" min="1">
+                                </div>
+                                <button class="btn btn-primary" onclick="addSubjectQuestion('truefalse')">➕ Add</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Match Section -->
+                    <div class="assign-qtype-content" id="qtype-match">
+                        <h4>🔗 Match the Following</h4>
+                        <div class="question-form">
+                            <div class="match-pairs-container" id="matchPairsContainer">
+                                <div class="match-pair-row">
+                                    <div class="form-group"><label>Column A</label><input type="text" class="match-col-a" placeholder="Item 1"></div>
+                                    <div class="form-group"><label>Column B</label><input type="text" class="match-col-b" placeholder="Match 1"></div>
+                                </div>
+                            </div>
+                            <button class="btn btn-sm btn-secondary" onclick="addMatchPair()">➕ Add Pair</button>
+                            <div class="form-row" style="margin-top: 15px;">
+                                <div class="form-group"><label>Marks</label><input type="number" id="assignMatchMarks" value="5" min="1"></div>
+                                <button class="btn btn-primary" onclick="addSubjectQuestion('match')">➕ Add</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Word Meaning Section -->
+                    <div class="assign-qtype-content" id="qtype-wordmeaning">
+                        <h4>📖 Word Meanings</h4>
+                        <div class="question-form">
+                            <div class="word-meaning-container" id="wordMeaningContainer">
+                                <div class="word-meaning-row">
+                                    <div class="form-group"><label>Word</label><input type="text" class="word-input" placeholder="Word"></div>
+                                    <div class="form-group"><label>Meaning</label><input type="text" class="meaning-input" placeholder="Meaning (blank for student)"></div>
+                                </div>
+                            </div>
+                            <button class="btn btn-sm btn-secondary" onclick="addWordMeaningRow()">➕ Add Word</button>
+                            <div class="form-row" style="margin-top: 15px;">
+                                <div class="form-group"><label>Marks</label><input type="number" id="assignWordMarks" value="5" min="1"></div>
+                                <button class="btn btn-primary" onclick="addSubjectQuestion('wordmeaning')">➕ Add</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table Section -->
+                    <div class="assign-qtype-content" id="qtype-table">
+                        <h4>📊 Table / Activity</h4>
+                        <div class="question-form">
+                            <div class="form-group">
+                                <label>Table Title</label>
+                                <input type="text" id="assignTableTitle" placeholder="Complete the table:">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label>Rows</label><input type="number" id="assignTableRows" value="4" min="2" max="20"></div>
+                                <div class="form-group"><label>Columns</label><input type="number" id="assignTableCols" value="3" min="2" max="10"></div>
+                            </div>
+                            <div class="table-headers-container" id="tableHeadersContainer">
+                                <label>Column Headers</label>
+                                <div class="table-headers-row">
+                                    <input type="text" class="table-header-input" placeholder="Header 1">
+                                    <input type="text" class="table-header-input" placeholder="Header 2">
+                                    <input type="text" class="table-header-input" placeholder="Header 3">
+                                </div>
+                            </div>
+                            <div class="form-row" style="margin-top: 15px;">
+                                <div class="form-group"><label>Marks</label><input type="number" id="assignTableMarks" value="5" min="1"></div>
+                                <button class="btn btn-primary" onclick="addSubjectQuestion('table')">➕ Add</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Picture Section -->
+                    <div class="assign-qtype-content" id="qtype-picture">
+                        <h4>🖼️ Picture Based Questions</h4>
+                        <div class="question-form">
+                            <div class="form-group">
+                                <label>Upload Image</label>
+                                <input type="file" id="assignPictureFile" accept="image/*" onchange="previewAssignmentPicture(event)">
+                                <div class="picture-preview" id="assignPicturePreview"><span>📷 Click to upload</span></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Caption</label>
+                                <input type="text" id="assignPictureCaption" placeholder="Image description...">
+                            </div>
+                            <div class="form-group">
+                                <label>Question</label>
+                                <textarea id="assignPictureQ" rows="2" placeholder="What do you see?"></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label>Lines</label><input type="number" id="assignPictureLines" value="5" min="1" max="20"></div>
+                                <div class="form-group"><label>Marks</label><input type="number" id="assignPictureMarks" value="5" min="1"></div>
+                                <button class="btn btn-primary" onclick="addSubjectQuestion('picture')">➕ Add</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Handwriting/Trace Section (For Junior Classes) -->
+                    <div class="assign-qtype-content" id="qtype-handwriting">
+                        <h4>✍️ Handwriting / Tracing Practice</h4>
+                        <div class="question-form">
+                            <div class="form-group">
+                                <label>Practice Type</label>
+                                <select id="handwritingType">
+                                    <option value="alphabet">Alphabet Tracing (Aa, Bb, Cc)</option>
+                                    <option value="words">Word Writing</option>
+                                    <option value="sentence">Sentence Writing</option>
+                                    <option value="numbers">Number Writing (1, 2, 3)</option>
+                                    <option value="urdu">Urdu Alphabet (ا ب پ)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Content to Write/Trace</label>
+                                <input type="text" id="handwritingContent" placeholder="e.g., Aa Bb Cc OR Apple, Ball, Cat">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group"><label>Practice Lines</label><input type="number" id="handwritingLines" value="4" min="1" max="10"></div>
+                                <div class="form-group"><label>Marks</label><input type="number" id="handwritingMarks" value="5" min="1"></div>
+                                <button class="btn btn-primary" onclick="addSubjectQuestion('handwriting')">➕ Add</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Questions List for Current Subject -->
+                    <div class="subject-questions-list" id="subjectQuestionsList">
+                        <div class="empty-state">
+                            <span class="empty-icon">📚</span>
+                            <p>No questions added for this subject yet</p>
+                            <small>Select a question type above and add questions</small>
+                        </div>
+                    </div>
+
+                    <!-- Footer Section Settings -->
+                    <div class="assignment-section compact-section" style="margin-top: 15px;">
+                        <h3 class="section-title">📋 Footer (Parent & Teacher)</h3>
+                        <div class="checkbox-grid compact-checkbox">
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="showParentComment" checked>
+                                <span class="checkmark"></span>
+                                <span>Parent's Comment</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="showParentSign" checked>
+                                <span class="checkmark"></span>
+                                <span>Parent's Sign</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="showTeacherRemarks" checked>
+                                <span class="checkmark"></span>
+                                <span>Teacher's Remarks</span>
+                            </label>
+                            <label class="checkbox-item">
+                                <input type="checkbox" id="showTeacherSign" checked>
+                                <span class="checkmark"></span>
+                                <span>Teacher's Sign</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Assignment Actions -->
+                    <div class="assignment-actions">
+                        <button class="btn btn-primary btn-large" onclick="previewAssignment()">👁️ Preview Assignment</button>
+                        <button class="btn btn-success btn-large" onclick="printAssignment()">🖨️ Print</button>
+                        <button class="btn btn-secondary" onclick="downloadAssignmentPDF()">📥 PDF</button>
+                        <button class="btn btn-secondary" onclick="saveAssignment()">💾 Save</button>
+                        <button class="btn btn-secondary" onclick="loadAssignment()">📂 Load</button>
+                        <button class="btn btn-danger" onclick="clearAssignment()">🗑️ Clear All</button>
+                    </div>
+
+                    <!-- Assignment Preview Container -->
+                    <div class="assignment-preview-container" id="assignmentPreviewContainer" style="display: none;">
+                        <h3>📄 Assignment Preview</h3>
+                        <div class="preview-content" id="assignmentPreviewContent"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Add/Edit Week Modal -->
+            <div class="modal-overlay" id="weekModal">
+                <div class="modal-content modal-large">
+                    <div class="modal-header">
+                        <h3 id="weekModalTitle">Add Week</h3>
+                        <button class="modal-close" onclick="closeWeekModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="week-info-row">
+                            <div class="form-group">
+                                <label class="syllabus-label" data-en="Week Number" data-ur="ہفتہ نمبر">Week Number</label>
+                                <input type="number" id="weekNumber" min="1" max="20" value="1">
+                            </div>
+                            <div class="form-group">
+                                <label class="syllabus-label" data-en="Date From" data-ur="تاریخ شروع">Date From</label>
+                                <input type="date" id="weekDateFrom">
+                            </div>
+                            <div class="form-group">
+                                <label class="syllabus-label" data-en="Date To" data-ur="تاریخ اختتام">Date To</label>
+                                <input type="date" id="weekDateTo">
+                            </div>
+                        </div>
+                        
+                        <div class="subjects-container" id="subjectsContainer">
+                            <!-- Subjects will be added here -->
+                        </div>
+                        
+                        <button class="btn btn-secondary btn-full" onclick="addSubjectToWeek()">
+                            ➕ <span class="syllabus-label" data-en="Add Subject" data-ur="مضمون شامل کریں">Add Subject</span>
+                        </button>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="closeWeekModal()">
+                            <span class="syllabus-label" data-en="Cancel" data-ur="منسوخ">Cancel</span>
+                        </button>
+                        <button class="btn btn-primary" onclick="saveWeek()">
+                            <span class="syllabus-label" data-en="Save Week" data-ur="ہفتہ محفوظ کریں">Save Week</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer removed -->
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
